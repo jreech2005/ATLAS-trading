@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environments
+.venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Market data is never committed (provenance and licensing; see docs/data_contract.md)
+/data/
+
+# OS / editor
+.DS_Store
+.vscode/
