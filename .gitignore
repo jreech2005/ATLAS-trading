@@ -5,7 +5,10 @@ __pycache__/
 build/
 dist/
 
-# Environments
+# Environments and secrets
+.env
+.env.*
+!.env.example
 .venv/
 
 # Tooling caches
@@ -17,6 +20,10 @@ htmlcov/
 
 # Market data is never committed (provenance and licensing; see docs/data_contract.md)
 /data/
+*.parquet
+
+# Model checkpoints
+checkpoints/
 
 # OS / editor
 .DS_Store
