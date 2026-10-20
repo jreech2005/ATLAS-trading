@@ -40,10 +40,7 @@ def compute_features(bars: pd.DataFrame) -> pd.DataFrame:
                 np.sqrt(sum(_lag(log_return, k) ** 2 for k in range(_WINDOW))),
                 _WINDOW,
             ),
-            "relative_volume_15m": (
-                volume / (sum(_lag(volume, k) for k in range(1, _WINDOW + 1)) / _WINDOW),
-                _WINDOW,
-            ),
+            "relative_volume_15m": (_relative_volume(volume), _WINDOW),
         }
     features = {
         name: np.where((history >= needed) & np.isfinite(values), values, np.nan)
@@ -69,6 +66,22 @@ def _continuous_history(closes: pd.DatetimeIndex) -> np.ndarray:
     starts = np.flatnonzero(~continues)  # row 0 always starts a run
     run = np.cumsum(~continues) - 1
     return np.arange(len(closes)) - starts[run]
+
+
+def _relative_volume(volume: np.ndarray) -> np.ndarray:
+    """Current volume over the mean of the preceding ``_WINDOW`` volumes.
+
+    The plain sum can overflow for finite volumes (``v / inf`` would then be a finite 0.0), so
+    those windows are re-summed from terms divided by ``_WINDOW`` first, which cannot overflow.
+    Other windows keep the plain sum: dividing first costs a rounding step and can underflow
+    tiny volumes to a zero mean.
+    """
+    preceding = [_lag(volume, k) for k in range(1, _WINDOW + 1)]
+    total = sum(preceding)
+    mean = np.where(
+        np.isinf(total), sum(lagged / _WINDOW for lagged in preceding), total / _WINDOW
+    )
+    return volume / mean
 
 
 def _lag(values: np.ndarray, k: int) -> np.ndarray:

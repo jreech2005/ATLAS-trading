@@ -336,6 +336,22 @@ def test_zero_current_volume_with_positive_history_is_zero_and_ready() -> None:
     assert result["feature_ready"].iloc[15]
 
 
+def test_relative_volume_is_correct_when_the_volume_sum_would_overflow() -> None:
+    # Regression: 15 * 1e308 overflowed to inf, and 1e308 / inf gave a finite, ready 0.0.
+    volume = np.full(16, 1e308)
+    result = compute_features(make_frame(utc_minutes("2024-01-02 14:31", 16), volume=volume))
+    assert result["relative_volume_15m"].iloc[15] == pytest.approx(1.0, rel=1e-12)
+    assert result["feature_ready"].iloc[15]
+
+
+def test_relative_volume_is_correct_at_the_float64_maximum() -> None:
+    # The largest valid volumes are the worst case for the re-summed mean; it must stay finite.
+    volume = np.full(16, np.finfo(np.float64).max)
+    result = compute_features(make_frame(utc_minutes("2024-01-02 14:31", 16), volume=volume))
+    assert result["relative_volume_15m"].iloc[15] == pytest.approx(1.0, rel=1e-12)
+    assert result["feature_ready"].iloc[15]
+
+
 def test_overflowing_calculations_are_nan_and_not_ready() -> None:
     close = np.r_[np.full(15, 1e-300), 1e300]  # the return ratio overflows to inf
     result = compute_features(make_frame(utc_minutes("2024-01-02 14:31", 16), close))
