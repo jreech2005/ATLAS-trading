@@ -184,7 +184,7 @@ def test_gaps_between_bars_are_not_errors(make_bars, timestamps: tuple[str, ...]
     "tz",
     [
         pytest.param("UTC", id="str_UTC"),
-        pytest.param(dt.timezone.utc, id="datetime_timezone_utc"),
+        pytest.param(dt.UTC, id="datetime_timezone_utc"),
         pytest.param(ZoneInfo("UTC"), id="zoneinfo_UTC"),
         pytest.param(ZoneInfo("Etc/UTC"), id="zoneinfo_Etc_UTC"),
     ],

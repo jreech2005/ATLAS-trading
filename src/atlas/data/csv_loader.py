@@ -60,7 +60,7 @@ def load_ohlcv_csv(
 
 def _parse_timezone(name: str) -> ZoneInfo:
     if not isinstance(name, str):
-        raise ValueError(f"provider_timezone must be an IANA timezone name, got {name!r}")
+        raise ValueError(f"provider_timezone must be an IANA timezone name, got {name!r}")  # noqa: TRY004
     try:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError, OSError) as error:

@@ -49,8 +49,13 @@ import pandas as pd
 import pytest
 
 import atlas.data as atlas_data
-import atlas.data.csv_loader as csv_loader
-from atlas.data import OHLCV_COLUMNS, OHLCVValidationError, load_ohlcv_csv, validate_ohlcv
+from atlas.data import (
+    OHLCV_COLUMNS,
+    OHLCVValidationError,
+    csv_loader,
+    load_ohlcv_csv,
+    validate_ohlcv,
+)
 
 MakeBars = Callable[[Sequence[str]], pd.DataFrame]
 
