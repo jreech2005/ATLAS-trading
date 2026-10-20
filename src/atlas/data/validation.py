@@ -73,6 +73,12 @@ def _check_timestamps(timestamps: pd.Series) -> None:
         )
     name = TIMESTAMP_COLUMN
     _fail_if(timestamps.isna().to_numpy(), f"'{name}' contains missing values (NaT)")
+    # A tzinfo can be *named* "UTC" yet carry a nonzero offset, so check the actual offsets too.
+    offsets = timestamps.dt.tz_localize(None) - timestamps.dt.tz_convert("UTC").dt.tz_localize(None)
+    _fail_if(
+        (offsets != pd.Timedelta(0)).to_numpy(),
+        f"'{name}' is labelled {dtype.tz} but has a nonzero UTC offset; it is not UTC",
+    )
     _fail_if(timestamps.duplicated(keep=False).to_numpy(), f"'{name}' contains duplicate timestamps")
     # Row i is flagged when it is not strictly later than row i - 1. Gaps of any size are fine.
     not_increasing = np.zeros(len(timestamps), dtype=bool)

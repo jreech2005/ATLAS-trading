@@ -11,4 +11,8 @@ OHLCV_COLUMNS: tuple[str, ...] = (TIMESTAMP_COLUMN, *PRICE_COLUMNS, VOLUME_COLUM
 
 
 class OHLCVValidationError(ValueError):
-    """Raised when a frame violates the OHLCV data contract."""
+    """Raised when a frame violates the OHLCV data contract.
+
+    ``load_ohlcv_csv`` also raises it for any problem with a CSV file's content, including
+    malformed CSV structure and timestamp text that cannot be converted to UTC bar closes.
+    """

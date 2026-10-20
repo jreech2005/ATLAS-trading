@@ -253,6 +253,44 @@ def test_error_reports_offending_row_positions(make_bars) -> None:
         validate_ohlcv(frame)
 
 
+@pytest.mark.parametrize("how", ["tz_convert", "tz_localize_wall_clock"])
+def test_timezone_named_utc_with_a_nonzero_offset_is_rejected(
+    valid_bars: pd.DataFrame, how: str
+) -> None:
+    """A tzinfo whose *name* is "UTC" but whose actual offset is +05:00 is not UTC."""
+    impostor = dt.timezone(dt.timedelta(hours=5), "UTC")
+    assert str(impostor) == "UTC" and impostor.utcoffset(None) == dt.timedelta(hours=5)
+    stamps = valid_bars["timestamp"]
+    if how == "tz_convert":  # same instants, re-expressed at +05:00
+        stamps = stamps.dt.tz_convert(impostor)
+    else:  # the UTC wall-clock digits relabelled as +05:00, i.e. five hours off
+        stamps = stamps.dt.tz_localize(None).dt.tz_localize(impostor)
+    with pytest.raises(OHLCVValidationError, match=r"UTC"):
+        validate_ohlcv(valid_bars.assign(timestamp=stamps))
+
+
+@pytest.mark.parametrize(
+    "labels",
+    [
+        pytest.param([10, 20, 30], id="integer_labels"),
+        pytest.param(["a", "b", "c"], id="string_labels"),
+        pytest.param([7, 7, 3], id="duplicate_unsorted_labels"),
+    ],
+)
+def test_reported_row_numbers_are_positions_not_index_labels(
+    valid_bars: pd.DataFrame, labels: list
+) -> None:
+    frame = set_value(valid_bars, "volume", 1, -5).set_axis(labels)
+    with pytest.raises(OHLCVValidationError, match=r"row positions \[1\]$"):
+        validate_ohlcv(frame)
+
+
+def test_timestamp_errors_report_positions_not_index_labels(valid_bars: pd.DataFrame) -> None:
+    frame = reorder_timestamps(valid_bars, [0, 2, 1]).set_axis([30, 20, 10])
+    with pytest.raises(OHLCVValidationError, match=r"strictly increasing.*row positions \[2\]$"):
+        validate_ohlcv(frame)
+
+
 # ---------------------------------------------------------------------------
 # Immutability
 # ---------------------------------------------------------------------------
