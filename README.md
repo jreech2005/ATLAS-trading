@@ -3,10 +3,10 @@
 ML-first quantitative trading research and simulation platform. **Research and
 simulation only; there is no live trading.**
 
-**Status: Phase 1B.** Implemented: the repository foundation, structural OHLCV
-validation (Phase 1A) and a loader for local one-minute OHLCV CSV files
-(Phase 1B). There are no data downloads, provenance records, features, models,
-backtests or performance results yet.
+**Status: Phase 1C.** Implemented: the repository foundation, structural OHLCV
+validation (Phase 1A), a loader for local one-minute OHLCV CSV files
+(Phase 1B) and causal features (Phase 1C). There are no data downloads,
+provenance records, labels, models, backtests or performance results yet.
 
 ## V1 research question (for later phases)
 
@@ -28,6 +28,7 @@ python -m pip install -e ".[dev]"
 python -m pytest            # full suite
 python -m pytest -v tests/data/test_ohlcv_validation.py
 python -m pytest -v tests/data/test_csv_loader.py
+python -m pytest -v tests/features/test_causal_features.py
 ```
 
 When testing from a Git worktree that shares another checkout's virtual
@@ -71,6 +72,20 @@ from atlas.data import validate_ohlcv
 validate_ohlcv(frame)   # returns None if valid; raises OHLCVValidationError otherwise
 ```
 
+Compute causal features from a validated frame:
+
+```python
+from atlas.features import compute_features
+
+features = compute_features(bars)  # same index and row order as bars
+usable = features[features["feature_ready"]]
+```
+
+Features are NaN and `feature_ready` is `False` wherever a window is incomplete:
+the first 15 minutes of each run of consecutive bars, after any missing minute,
+and after each America/New_York date change. See `docs/architecture.md` for the
+exact definitions and limitations.
+
 Validation is structural only. Data provenance and licensing are not recorded
 or checked yet; record them separately for every dataset (see
 `docs/data_contract.md`).
@@ -81,7 +96,7 @@ or checked yet; record them separately for every dataset (see
 |------|---------|
 | `AGENTS.md` | Engineering rules (TDD, causality, data provenance, no live trading) |
 | `CLAUDE.md` | Claude Code operating instructions |
-| `docs/architecture.md` | V1 pipeline and what is implemented |
+| `docs/architecture.md` | V1 pipeline, what is implemented, feature definitions |
 | `docs/data_contract.md` | OHLCV schema, timestamp and validity rules, CSV loading rules and limitations |
 | `docs/testing.md` | Test commands, TDD workflow, test categories |
 | `docs/decisions/` | Architecture decision records |
