@@ -3,10 +3,11 @@
 ML-first quantitative trading research and simulation platform. **Research and
 simulation only; there is no live trading.**
 
-**Status: Phase 1C.** Implemented: the repository foundation, structural OHLCV
+**Status: Phase 1D.** Implemented: the repository foundation, structural OHLCV
 validation (Phase 1A), a loader for local one-minute OHLCV CSV files
-(Phase 1B) and causal features (Phase 1C). There are no data downloads,
-provenance records, labels, models, backtests or performance results yet.
+(Phase 1B), causal features (Phase 1C) and five-minute prediction labels
+(Phase 1D). There are no data downloads, provenance records, train/test
+splits, models, backtests or performance results yet.
 
 ## V1 research question (for later phases)
 
@@ -29,6 +30,7 @@ python -m pytest            # full suite
 python -m pytest -v tests/data/test_ohlcv_validation.py
 python -m pytest -v tests/data/test_csv_loader.py
 python -m pytest -v tests/features/test_causal_features.py
+python -m pytest -v tests/labels/test_five_minute_labels.py
 ```
 
 When testing from a Git worktree that shares another checkout's virtual
@@ -86,6 +88,23 @@ the first 15 minutes of each run of consecutive bars, after any missing minute,
 and after each America/New_York date change. See `docs/architecture.md` for the
 exact definitions and limitations.
 
+Compute five-minute training labels from the same frame:
+
+```python
+from atlas.labels import compute_labels
+
+labels = compute_labels(bars)  # same index and row order as bars
+# future_return_5m = close[t+5] / close[t] - 1; direction_5m = 1 if > 0 else 0
+trainable = features["feature_ready"] & labels["label_ready"]
+```
+
+A label is defined only when the bar and the five bars after it are consecutive
+one-minute bars on one America/New_York date. Otherwise the return is NaN, the
+direction is `<NA>`, `label_end_timestamp` is NaT and `label_ready` is `False`.
+Labels use future prices: they are training targets only and must never be used
+as features or at decision time. See `docs/architecture.md` for the full
+contract.
+
 Validation is structural only. Data provenance and licensing are not recorded
 or checked yet; record them separately for every dataset (see
 `docs/data_contract.md`).
@@ -96,7 +115,7 @@ or checked yet; record them separately for every dataset (see
 |------|---------|
 | `AGENTS.md` | Engineering rules (TDD, causality, data provenance, no live trading) |
 | `CLAUDE.md` | Claude Code operating instructions |
-| `docs/architecture.md` | V1 pipeline, what is implemented, feature definitions |
+| `docs/architecture.md` | V1 pipeline, what is implemented, feature and label definitions |
 | `docs/data_contract.md` | OHLCV schema, timestamp and validity rules, CSV loading rules and limitations |
 | `docs/testing.md` | Test commands, TDD workflow, test categories |
 | `docs/decisions/` | Architecture decision records |
